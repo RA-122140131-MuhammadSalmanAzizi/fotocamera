@@ -1,6 +1,6 @@
 /* ============================================================
    Dunia Kita — untuk Nabila, dari Salman
-   Three.js: hati partikel (GLSL) + nebula + bloom + foto orbit.
+   Three.js: planet Bumi 3D + nebula + foto orbit (bloom lembut).
    ============================================================ */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -32,8 +32,8 @@ const CAPTIONS = [
 ];
 
 const TYPE_LINES = [
-  'Sebuah semesta kecil, isinya cuma kamu.',
-  'Geser dunia ini sesukamu.',
+  'Sebuah dunia kecil, isinya cuma kamu.',
+  'Putar bumi ini sesukamu.',
   'Setiap bintang di sini namamu.'
 ];
 
@@ -45,37 +45,38 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPrefere
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
+renderer.toneMappingExposure = 0.95;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 400);
-camera.position.set(0, 1.5, 34);
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 600);
+camera.position.set(0, 2, 30);
 
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.06;
 controls.rotateSpeed = 0.6;
-controls.minDistance = 12;
-controls.maxDistance = 60;
+controls.minDistance = 11;
+controls.maxDistance = 55;
 controls.autoRotate = true;
-controls.autoRotateSpeed = 0.5;
+controls.autoRotateSpeed = 0.45;
 controls.enablePan = false;
 controls.enabled = false; // dinyalakan setelah intro
 
-scene.add(new THREE.AmbientLight(0xbcd6ff, 1.1));
-const key = new THREE.DirectionalLight(0xffffff, 0.7);
-key.position.set(6, 10, 8);
-scene.add(key);
+// pencahayaan: matahari + cahaya lembut
+scene.add(new THREE.AmbientLight(0x4a5e8c, 0.55));
+const sun = new THREE.DirectionalLight(0xfff4e0, 2.1);
+sun.position.set(-8, 4, 7);
+scene.add(sun);
 
 /* ============================================================
-   POST-PROCESSING (bloom)
+   POST-PROCESSING (bloom lembut, tidak silau)
    ============================================================ */
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 const bloom = new UnrealBloomPass(
   new THREE.Vector2(window.innerWidth, window.innerHeight),
-  0.85, 0.45, 0.12
+  0.32, 0.5, 0.82   // strength, radius, threshold (tinggi → hanya highlight yang glow)
 );
 composer.addPass(bloom);
 
@@ -98,7 +99,7 @@ function heartTexture() {
 const HEART_TEX = heartTexture();
 
 /* ============================================================
-   NEBULA (langit shader di dalam bola)
+   NEBULA (langit shader di dalam bola) — diredupkan
    ============================================================ */
 const nebulaMat = new THREE.ShaderMaterial({
   side: THREE.BackSide, depthWrite: false,
@@ -120,19 +121,19 @@ const nebulaMat = new THREE.ShaderMaterial({
     float fbm(vec3 p){ float v=0.0,a=0.5; for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.02; a*=0.5; } return v; }
     void main(){
       vec3 d = normalize(vPos);
-      float t = uTime*0.025;
+      float t = uTime*0.02;
       float n  = fbm(d*2.4 + vec3(t, t*0.4, t*0.2));
       float n2 = fbm(d*5.2 - vec3(t*0.7, 0.0, t*0.3));
       float g = smoothstep(-1.0, 1.0, d.y);
-      vec3 col = mix(vec3(0.006,0.012,0.05), vec3(0.02,0.06,0.24), g);
-      col += vec3(0.10,0.34,0.90) * pow(n, 2.2) * 0.55;
-      col += vec3(0.25,0.55,1.0)  * pow(n2,3.0) * 0.22;
-      col += vec3(0.85,0.35,0.6)  * pow(max(n-0.62,0.0),2.0) * 0.5; // semburat merah muda
+      vec3 col = mix(vec3(0.004,0.008,0.035), vec3(0.012,0.04,0.16), g);
+      col += vec3(0.06,0.20,0.55) * pow(n, 2.4) * 0.32;
+      col += vec3(0.14,0.32,0.7)  * pow(n2,3.0) * 0.14;
+      col += vec3(0.5,0.2,0.4)    * pow(max(n-0.66,0.0),2.0) * 0.28;
       gl_FragColor = vec4(col, 1.0);
     }
   `
 });
-scene.add(new THREE.Mesh(new THREE.SphereGeometry(200, 48, 48), nebulaMat));
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(300, 48, 48), nebulaMat));
 
 /* ============================================================
    STARFIELD
@@ -140,96 +141,80 @@ scene.add(new THREE.Mesh(new THREE.SphereGeometry(200, 48, 48), nebulaMat));
 (function stars() {
   const N = 1600, g = new THREE.BufferGeometry(), p = new Float32Array(N * 3);
   for (let i = 0; i < N; i++) {
-    const r = 70 + Math.random() * 110;
+    const r = 90 + Math.random() * 150;
     const th = Math.random() * Math.PI * 2, ph = Math.acos(Math.random() * 2 - 1);
     p[i * 3] = r * Math.sin(ph) * Math.cos(th);
     p[i * 3 + 1] = r * Math.cos(ph);
     p[i * 3 + 2] = r * Math.sin(ph) * Math.sin(th);
   }
   g.setAttribute('position', new THREE.BufferAttribute(p, 3));
-  const m = new THREE.PointsMaterial({ color: 0xbcd6ff, size: 0.7, sizeAttenuation: true, transparent: true, opacity: 0.9, depthWrite: false });
+  const m = new THREE.PointsMaterial({ color: 0xbcd6ff, size: 0.6, sizeAttenuation: true, transparent: true, opacity: 0.85, depthWrite: false });
   scene.add(new THREE.Points(g, m));
 })();
 
 /* ============================================================
-   HATI PARTIKEL (GLSL) — terbentuk dari serpihan beterbangan
+   PLANET BUMI
    ============================================================ */
-let heartMat;
-(function particleHeart() {
-  const COUNT = 7000, S = 6.2;
-  const pos = [], col = [], start = [], scl = [];
-  const cBlue = new THREE.Color(0x2f6bff);
-  const cCyan = new THREE.Color(0x8fe9ff);
-  const cPink = new THREE.Color(0xff7eb6);
-  let made = 0, guard = 0;
-  while (made < COUNT && guard < COUNT * 80) {
-    guard++;
-    const x = (Math.random() * 2 - 1) * 1.5;
-    const y = (Math.random() * 2 - 1) * 1.5;
-    const f = Math.pow(x * x + y * y - 1.0, 3.0) - x * x * y * y * y; // hati implisit
-    if (f > 0) continue;
-    const depth = Math.sqrt(Math.max(0, -f));
-    const z = (Math.random() * 2 - 1) * depth * 0.82;
-    pos.push(x * S, y * S, z * S);
+const R = 6.2;
+const earthGroup = new THREE.Group();
+earthGroup.rotation.z = 23.4 * Math.PI / 180; // kemiringan sumbu
+scene.add(earthGroup);
 
-    const c = cBlue.clone().lerp(cCyan, Math.random() * 0.65);
-    if (Math.random() < 0.13) c.lerp(cPink, 0.4 + Math.random() * 0.5);
-    col.push(c.r, c.g, c.b);
+const tl = new THREE.TextureLoader();
+const maxAniso = renderer.capabilities.getMaxAnisotropy();
+function ld(src) {
+  const t = tl.load(src);
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso;
+  return t;
+}
+const earthMap = ld('assets/textures/earth_atmos_2048.jpg');
+const earthSpec = tl.load('assets/textures/earth_specular_2048.jpg');
+const earthNorm = tl.load('assets/textures/earth_normal_2048.jpg');
+const cloudMap = tl.load('assets/textures/earth_clouds_1024.png');
+earthSpec.anisotropy = maxAniso; earthNorm.anisotropy = maxAniso; cloudMap.anisotropy = maxAniso;
 
-    const r = 16 + Math.random() * 16;
-    const th = Math.random() * Math.PI * 2, ph = Math.acos(Math.random() * 2 - 1);
-    start.push(r * Math.sin(ph) * Math.cos(th), r * Math.cos(ph), r * Math.sin(ph) * Math.sin(th));
-    scl.push(0.6 + Math.random() * 1.8);
-    made++;
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setAttribute('aColor', new THREE.Float32BufferAttribute(col, 3));
-  g.setAttribute('aStart', new THREE.Float32BufferAttribute(start, 3));
-  g.setAttribute('aScale', new THREE.Float32BufferAttribute(scl, 1));
+const earth = new THREE.Mesh(
+  new THREE.SphereGeometry(R, 96, 96),
+  new THREE.MeshPhongMaterial({
+    map: earthMap,
+    specularMap: earthSpec,
+    normalMap: earthNorm,
+    normalScale: new THREE.Vector2(0.7, 0.7),
+    specular: new THREE.Color(0x2a4a6a),
+    shininess: 16
+  })
+);
+earthGroup.add(earth);
 
-  heartMat = new THREE.ShaderMaterial({
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-    uniforms: { uTime: { value: 0 }, uProgress: { value: 0 }, uPulse: { value: 0 }, uSize: { value: 14.0 } },
+const clouds = new THREE.Mesh(
+  new THREE.SphereGeometry(R * 1.012, 96, 96),
+  new THREE.MeshPhongMaterial({ map: cloudMap, transparent: true, opacity: 0.42, depthWrite: false })
+);
+earthGroup.add(clouds);
+
+// atmosfer (fresnel glow)
+const atmo = new THREE.Mesh(
+  new THREE.SphereGeometry(R * 1.16, 64, 64),
+  new THREE.ShaderMaterial({
+    transparent: true, side: THREE.BackSide, depthWrite: false, blending: THREE.AdditiveBlending,
+    uniforms: { uColor: { value: new THREE.Color(0x3d7bff) } },
     vertexShader: /* glsl */`
-      attribute vec3 aColor; attribute vec3 aStart; attribute float aScale;
-      uniform float uTime, uProgress, uPulse, uSize;
-      varying vec3 vColor;
-      void main(){
-        vColor = aColor;
-        vec3 home = position;
-        float e = uProgress*uProgress*(3.0-2.0*uProgress);   // smoothstep
-        vec3 p = mix(aStart, home, e);
-        p *= (1.0 + uPulse*0.07);                            // detak
-        p.x += sin(uTime*0.7 + home.y*1.8)*0.04;            // gerak halus
-        p.y += cos(uTime*0.6 + home.x*1.6)*0.04;
-        vec4 mv = modelViewMatrix * vec4(p,1.0);
-        gl_PointSize = uSize * aScale * (0.7 + uPulse*0.5) * (300.0 / -mv.z);
-        gl_Position = projectionMatrix * mv;
-      }
+      varying vec3 vN; varying vec3 vP;
+      void main(){ vN = normalize(normalMatrix*normal); vec4 mv = modelViewMatrix*vec4(position,1.0); vP = mv.xyz; gl_Position = projectionMatrix*mv; }
     `,
     fragmentShader: /* glsl */`
-      precision highp float;
-      varying vec3 vColor;
-      void main(){
-        float d = length(gl_PointCoord - 0.5);
-        float a = smoothstep(0.5, 0.05, d);
-        a = pow(a, 1.5);
-        gl_FragColor = vec4(vColor, a);
-      }
+      precision highp float; varying vec3 vN; varying vec3 vP; uniform vec3 uColor;
+      void main(){ vec3 v = normalize(-vP); float f = pow(1.0 - abs(dot(vN, v)), 3.0); gl_FragColor = vec4(uColor, f*0.9); }
     `
-  });
-  const points = new THREE.Points(g, heartMat);
-  points.name = 'heart';
-  scene.add(points);
-})();
+  })
+);
+earthGroup.add(atmo);
 
 /* ============================================================
-   FOTO MELAYANG (mengorbit hati, bisa diklik)
+   FOTO MELAYANG (mengorbit Bumi, bisa diklik)
    ============================================================ */
 const photoGroups = [];
 const pickMeshes = [];
-const texLoader = new THREE.TextureLoader();
 let loadedCount = 0;
 const loaderBar = document.getElementById('loaderBar');
 const loaderEl = document.getElementById('loader');
@@ -246,16 +231,14 @@ PHOTOS.forEach((src, i) => {
   scene.add(group);
   photoGroups.push(group);
 
-  // bingkai
   const frame = new THREE.Mesh(
     new THREE.PlaneGeometry(3.2, 3.2),
-    new THREE.MeshBasicMaterial({ color: 0xcfe0ff, transparent: true, opacity: 0.9 })
+    new THREE.MeshBasicMaterial({ color: 0xdce8ff, transparent: true, opacity: 0.85 })
   );
   frame.position.z = -0.02;
   group.add(frame);
   group.userData.frame = frame;
 
-  // foto (placeholder dulu)
   const photo = new THREE.Mesh(
     new THREE.PlaneGeometry(3, 3),
     new THREE.MeshBasicMaterial({ color: 0x0c1c4a, transparent: true })
@@ -265,9 +248,9 @@ PHOTOS.forEach((src, i) => {
   photo.userData.group = group;
   pickMeshes.push(photo);
 
-  texLoader.load(src, (tex) => {
+  tl.load(src, (tex) => {
     tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    tex.anisotropy = maxAniso;
     const ar = tex.image.width / tex.image.height;
     let w = 3.4, h = 3.4 / ar;
     if (h > 4.4) { h = 4.4; w = 4.4 * ar; }
@@ -284,7 +267,6 @@ PHOTOS.forEach((src, i) => {
     if (loadedCount === PHOTOS.length) startExperience();
   });
 });
-// jaring pengaman
 setTimeout(() => { if (!started) startExperience(); }, 6500);
 
 /* ============================================================
@@ -319,7 +301,7 @@ canvas.addEventListener('pointermove', (e) => {
 canvas.addEventListener('pointerdown', (e) => { downX = e.clientX; downY = e.clientY; });
 canvas.addEventListener('pointerup', (e) => {
   const moved = Math.hypot(e.clientX - downX, e.clientY - downY);
-  if (moved > 6) return; // itu drag, bukan klik
+  if (moved > 6) return;
   setPointer(e);
   raycaster.setFromCamera(pointer, camera);
   const hit = raycaster.intersectObjects(pickMeshes, false)[0];
@@ -340,7 +322,6 @@ function focusPhoto(group) {
     g.userData.focused = (g === group);
     g.userData.opacity = (g === group) ? 1 : 0.12;
   });
-  // posisi target: tepat di depan kamera
   const dir = new THREE.Vector3();
   camera.getWorldDirection(dir);
   group.userData.focusPos = camera.position.clone().add(dir.multiplyScalar(7));
@@ -392,7 +373,7 @@ function heartBurst(sx, sy) {
    HUJAN HATI (toggle)
    ============================================================ */
 let rainOn = false, rainPts = null, rainVel = null;
-function buildRain() {
+(function buildRain() {
   const N = 140, g = new THREE.BufferGeometry(), p = new Float32Array(N * 3);
   rainVel = [];
   for (let i = 0; i < N; i++) {
@@ -406,14 +387,66 @@ function buildRain() {
     map: HEART_TEX, size: 1.4, transparent: true, opacity: 0.95,
     depthWrite: false, blending: THREE.AdditiveBlending, color: 0xff9ec8
   });
-  rainPts = new THREE.Points(g, m);
-  rainPts.visible = false;
-  scene.add(rainPts);
-}
-buildRain();
+  rainPts = new THREE.Points(g, m); rainPts.visible = false; scene.add(rainPts);
+})();
 
 /* ============================================================
-   HUD: tombol, surat, efek ketik, penghitung
+   MUSIK — pakai assets/music.mp3 jika ada, jika tidak pad ambient
+   ============================================================ */
+const btnMusic = document.getElementById('btnMusic');
+let musicOn = false, audioEl = null, actx = null, masterGain = null, synthBuilt = false;
+
+function buildSynth(ctx) {
+  masterGain = ctx.createGain(); masterGain.gain.value = 0; masterGain.connect(ctx.destination);
+  const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 950; filter.connect(masterGain);
+  const delay = ctx.createDelay(); delay.delayTime.value = 0.5;
+  const fb = ctx.createGain(); fb.gain.value = 0.32;
+  delay.connect(fb); fb.connect(delay); filter.connect(delay); delay.connect(masterGain);
+  const chord = [196.0, 261.63, 329.63, 392.0, 493.88]; // Cmaj7 lembut
+  chord.forEach((f, i) => {
+    const o = ctx.createOscillator(); o.type = i % 2 ? 'sine' : 'triangle'; o.frequency.value = f;
+    const g = ctx.createGain(); g.gain.value = 0.0;
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.05 + i * 0.012;
+    const lg = ctx.createGain(); lg.gain.value = 0.035;
+    lfo.connect(lg); lg.connect(g.gain); lfo.start();
+    o.connect(g); g.connect(filter); o.start();
+    g.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 4);
+  });
+  synthBuilt = true;
+}
+function fadeMaster(to, dur) {
+  if (!masterGain || !actx) return;
+  const now = actx.currentTime;
+  masterGain.gain.cancelScheduledValues(now);
+  masterGain.gain.setValueAtTime(masterGain.gain.value, now);
+  masterGain.gain.linearRampToValueAtTime(to, now + dur);
+}
+function useSynth() {
+  if (!actx) { actx = new (window.AudioContext || window.webkitAudioContext)(); }
+  if (actx.state === 'suspended') actx.resume();
+  if (!synthBuilt) buildSynth(actx);
+  fadeMaster(0.5, 3);
+}
+function startMusic() {
+  if (!audioEl) { audioEl = new Audio('assets/music.mp3'); audioEl.loop = true; audioEl.volume = 0; }
+  audioEl.play().then(() => {
+    let v = 0; const id = setInterval(() => { v = Math.min(0.65, v + 0.03); audioEl.volume = v; if (v >= 0.65) clearInterval(id); }, 80);
+  }).catch(() => { useSynth(); }); // tidak ada file → pad ambient
+}
+function stopMusic() {
+  if (audioEl && !audioEl.paused) {
+    let v = audioEl.volume; const id = setInterval(() => { v = Math.max(0, v - 0.06); audioEl.volume = v; if (v <= 0) { audioEl.pause(); clearInterval(id); } }, 60);
+  }
+  if (masterGain) fadeMaster(0, 1.5);
+}
+btnMusic.addEventListener('click', () => {
+  musicOn = !musicOn;
+  btnMusic.classList.toggle('is-active', musicOn);
+  if (musicOn) startMusic(); else stopMusic();
+});
+
+/* ============================================================
+   HUD: surat, efek ketik, penghitung
    ============================================================ */
 const hud = document.getElementById('hud');
 const sheet = document.getElementById('sheet');
@@ -429,11 +462,10 @@ btnRain.addEventListener('click', () => {
 document.getElementById('btnReset').addEventListener('click', () => {
   unfocus();
   controls.reset();
-  camera.position.set(0, 1.5, 34);
+  camera.position.set(0, 2, 30);
   controls.autoRotate = true;
 });
 
-// efek ketik
 (function typing() {
   const el = document.getElementById('typeLine');
   let li = 0, ci = 0, del = false;
@@ -446,9 +478,9 @@ document.getElementById('btnReset').addEventListener('click', () => {
   })();
 })();
 
-// penghitung
 (function counter() {
   const dEl = document.getElementById('cDays'), clk = document.getElementById('cClock');
+  const dayEl = document.getElementById('letterDay');
   const pad = (n) => String(n).padStart(2, '0');
   function update() {
     let diff = Math.max(0, Date.now() - START_DATE.getTime());
@@ -457,6 +489,7 @@ document.getElementById('btnReset').addEventListener('click', () => {
     const m = Math.floor(diff / 60000); diff -= m * 60000;
     const s = Math.floor(diff / 1000);
     dEl.textContent = days; clk.textContent = `${pad(h)} : ${pad(m)} : ${pad(s)}`;
+    if (dayEl) dayEl.textContent = `Hari ke-${days} bersamamu`;
   }
   update(); setInterval(update, 1000);
 })();
@@ -470,14 +503,7 @@ function startExperience() {
   started = true;
   setTimeout(() => loaderEl.classList.add('is-done'), 300);
   setTimeout(() => hud.classList.add('is-shown'), 500);
-  setTimeout(() => { controls.enabled = true; }, 2600);
-}
-
-function beat(t) {
-  const p = (t % 1.5) / 1.5;
-  const b1 = Math.exp(-Math.pow((p - 0.10) / 0.05, 2));
-  const b2 = Math.exp(-Math.pow((p - 0.28) / 0.06, 2)) * 0.85;
-  return b1 + b2;
+  setTimeout(() => { controls.enabled = true; }, 2400);
 }
 
 const tmp = new THREE.Vector3();
@@ -485,19 +511,20 @@ const clock = new THREE.Clock();
 let elapsed = 0;
 function animate() {
   requestAnimationFrame(animate);
-  // hitung delta SEKALI, lalu akumulasi waktu sendiri
-  // (getElapsedTime + getDelta bersamaan akan saling memakan delta)
   const dt = Math.min(clock.getDelta(), 0.05);
   elapsed += dt;
   const t = elapsed;
 
   nebulaMat.uniforms.uTime.value = t;
-  if (heartMat) {
-    heartMat.uniforms.uTime.value = t;
-    heartMat.uniforms.uPulse.value = beat(t);
-    if (started && introT < 1) { introT = Math.min(1, introT + dt / 2.4); }
-    heartMat.uniforms.uProgress.value = introT;
-  }
+
+  // rotasi bumi & awan
+  earth.rotation.y += dt * 0.035;
+  clouds.rotation.y += dt * 0.05;
+
+  // intro: bumi membesar + kamera mendekat
+  if (started && introT < 1) introT = Math.min(1, introT + dt / 2.2);
+  const e = introT * introT * (3 - 2 * introT);
+  earthGroup.scale.setScalar(0.2 + 0.8 * e);
 
   // foto: billboard + lerp posisi/skala/opasitas
   photoGroups.forEach((g) => {
@@ -506,11 +533,11 @@ function animate() {
     if (d.focused && d.focusPos) target = d.focusPos;
     else { tmp.copy(d.home); tmp.y += Math.sin(t * 0.8 + d.bob) * 0.5; target = tmp; }
     g.position.lerp(target, 0.08);
-    const sc = THREE.MathUtils.lerp(g.scale.x, d.scaleMul, 0.12);
+    const sc = THREE.MathUtils.lerp(g.scale.x, d.scaleMul * (0.2 + 0.8 * e), 0.12);
     g.scale.setScalar(sc);
     g.lookAt(camera.position);
     const op = THREE.MathUtils.lerp(d.photo.material.opacity, d.opacity, 0.1);
-    d.photo.material.opacity = op; d.frame.material.opacity = op * 0.9;
+    d.photo.material.opacity = op; d.frame.material.opacity = op * 0.85;
   });
 
   // ledakan hati
@@ -518,7 +545,7 @@ function animate() {
     const b = bursts[i]; b.life += dt;
     const arr = b.pts.geometry.attributes.position.array;
     for (let j = 0; j < b.vel.length; j++) {
-      b.vel[j].y -= dt * 1.5; // gravitasi
+      b.vel[j].y -= dt * 1.5;
       arr[j * 3] += b.vel[j].x * dt;
       arr[j * 3 + 1] += b.vel[j].y * dt;
       arr[j * 3 + 2] += b.vel[j].z * dt;
