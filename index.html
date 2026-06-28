@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta name="description" content="Dunia 3D interaktif dari Muhammad Salman Azizi untuk Nabila Trilia Azzahra." />
 <meta name="theme-color" content="#03061a" />
-<title>Untuk Nabila &mdash; Dunia Kita</title>
+<title>Our World &mdash; untuk Nabila</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Kaushan+Script&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&family=Kaushan+Script&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet" />
 
 <link rel="stylesheet" href="css/style.css" />
 
@@ -27,11 +27,17 @@
 <!-- ====================== LOADER ====================== -->
 <div class="loader" id="loader">
   <div class="loader__heart">
-    <svg viewBox="0 0 24 24" width="48" height="48" aria-hidden="true">
-      <path fill="currentColor" d="M12 21s-7.5-4.9-10-9.4C.3 8.3 1.7 4.7 5 4c2-.4 3.8.5 5 2.1C11.2 4.5 13 3.6 15 4c3.3.7 4.7 4.3 3 7.6C19.5 16.1 12 21 12 21z"/>
+    <svg viewBox="0 0 24 24" width="54" height="54" aria-hidden="true">
+      <path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
     </svg>
   </div>
-  <div class="loader__bar"><span id="loaderBar"></span></div>
+  <div class="loader__track">
+    <div class="loader__fill" id="loaderBar"></div>
+    <div class="loader__rider" id="loaderRider">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+    </div>
+  </div>
+  <p class="loader__pct" id="loaderPct">0%</p>
   <p class="loader__text">Merangkai dunia untukmu&hellip;</p>
 </div>
 
@@ -44,26 +50,25 @@
   <!-- kiri atas: monogram -->
   <div class="brand">Salman <span>&amp;</span> Nabila</div>
 
-  <!-- kanan atas: tombol minimalis -->
+  <!-- kanan atas: tombol teks -->
   <nav class="tools">
-    <button class="tool" id="btnLetter" title="Surat">
-      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="m3.5 6.5 8.5 6 8.5-6"/></svg>
+    <button class="tool" id="btnLetter">
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="m3.5 6.5 8.5 6 8.5-6"/></svg>
       <span>Surat</span>
     </button>
-    <button class="tool" id="btnRain" title="Hujan Hati">
-      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.9-10-9.4C.3 8.3 1.7 4.7 5 4c2-.4 3.8.5 5 2.1C11.2 4.5 13 3.6 15 4c3.3.7 4.7 4.3 3 7.6C19.5 16.1 12 21 12 21z"/></svg>
+    <button class="tool" id="btnRain">
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
       <span>Hujan Hati</span>
     </button>
-    <button class="tool" id="btnReset" title="Reset">
-      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M3 4v4h4"/></svg>
+    <button class="tool" id="btnReset">
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M3 4v4h4"/></svg>
       <span>Reset</span>
     </button>
   </nav>
 
   <!-- tengah: judul -->
   <div class="hud__center">
-    <p class="kicker">untuk Nabila Trilia Azzahra</p>
-    <h1 class="title">Dunia Kita</h1>
+    <h1 class="title">Our World</h1>
     <p class="subtitle" id="typeLine"></p>
   </div>
 
@@ -83,11 +88,25 @@
     <span>Klik foto</span>
   </p>
 
-  <!-- kanan bawah: musik -->
-  <button class="musicbtn" id="btnMusic" title="Musik" aria-label="Putar musik">
-    <span class="musicbtn__bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-    <svg class="musicbtn__ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="16" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
-  </button>
+  <!-- kanan bawah: musik (piringan hitam + menu lagu) -->
+  <div class="music" id="music">
+    <button class="musicbtn" id="btnMusic" title="Musik" aria-label="Pilih musik">
+      <svg class="musicbtn__disc" viewBox="0 0 48 48" width="30" height="30" aria-hidden="true">
+        <circle cx="24" cy="24" r="22" fill="#0b1430" stroke="currentColor" stroke-width="1.4"/>
+        <circle cx="24" cy="24" r="16" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.5"/>
+        <circle cx="24" cy="24" r="11" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.4"/>
+        <circle cx="24" cy="24" r="6.5" fill="currentColor" opacity="0.9"/>
+        <circle cx="24" cy="24" r="2" fill="#0b1430"/>
+        <circle cx="31" cy="17" r="1.4" fill="#fff" opacity="0.85"/>
+      </svg>
+    </button>
+    <div class="music__menu" id="musicMenu">
+      <p class="music__head">Pilih lagu</p>
+      <button class="music__opt" data-song="space"><span>Space Song</span><small>Beach House</small></button>
+      <button class="music__opt" data-song="ruang"><span>Ruang Rindu</span><small>Letto</small></button>
+      <button class="music__opt" data-song="ambient"><span>Ambient</span><small>bawaan situs</small></button>
+    </div>
+  </div>
 
   <!-- caption foto -->
   <div class="focuscap" id="focuscap">
@@ -102,19 +121,21 @@
     <button class="letter__close" id="sheetClose" aria-label="Tutup">
       <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
     </button>
-    <div class="letter__seal">
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.9-10-9.4C.3 8.3 1.7 4.7 5 4c2-.4 3.8.5 5 2.1C11.2 4.5 13 3.6 15 4c3.3.7 4.7 4.3 3 7.6C19.5 16.1 12 21 12 21z"/></svg>
+    <div class="letter__scroll">
+      <div class="letter__seal">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      </div>
+      <p class="letter__day" id="letterDay">Hari ke-0 bersamamu</p>
+      <p class="letter__to">Untuk Nabila Trilia Azzahra,</p>
+      <div class="letter__body">
+        <p>Entah sejak kapan, namamu jadi hal pertama yang ku ingat saat bangun dan hal terakhir yang ku doakan sebelum tidur. Aku tidak pandai merangkai kata, tapi untukmu aku ingin terus mencoba.</p>
+        <p>Terima kasih sudah menjadi rumah yang nyaman ketika dunia terasa terlalu ramai. Bersamamu, hal-hal kecil terasa istimewa &mdash; obrolan tengah malam, tawa tanpa alasan, dan diam yang tetap terasa hangat.</p>
+        <p>Kalau ada yang menyebutku bucin, biarlah. Aku memang sebucin itu padamu, dan aku tidak keberatan dunia tahu.</p>
+      </div>
+      <div class="letter__rule"><span><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span></div>
+      <p class="letter__sign">Yang selalu memilihmu,</p>
+      <p class="letter__name">Muhammad Salman Azizi</p>
     </div>
-    <p class="letter__day" id="letterDay">Hari ke-0 bersamamu</p>
-    <p class="letter__to">Untuk Nabila Trilia Azzahra,</p>
-    <div class="letter__body">
-      <p>Entah sejak kapan, namamu jadi hal pertama yang ku ingat saat bangun dan hal terakhir yang ku doakan sebelum tidur. Aku tidak pandai merangkai kata, tapi untukmu aku ingin terus mencoba.</p>
-      <p>Terima kasih sudah menjadi rumah yang nyaman ketika dunia terasa terlalu ramai. Bersamamu, hal-hal kecil terasa istimewa &mdash; obrolan tengah malam, tawa tanpa alasan, dan diam yang tetap terasa hangat.</p>
-      <p>Kalau ada yang menyebutku bucin, biarlah. Aku memang sebucin itu padamu, dan aku tidak keberatan dunia tahu.</p>
-    </div>
-    <div class="letter__rule"><span><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.9-10-9.4C.3 8.3 1.7 4.7 5 4c2-.4 3.8.5 5 2.1C11.2 4.5 13 3.6 15 4c3.3.7 4.7 4.3 3 7.6C19.5 16.1 12 21 12 21z"/></svg></span></div>
-    <p class="letter__sign">Yang selalu memilihmu,</p>
-    <p class="letter__name">Muhammad Salman Azizi</p>
   </article>
 </div>
 

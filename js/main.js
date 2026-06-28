@@ -59,7 +59,7 @@ controls.rotateSpeed = 0.6;
 controls.minDistance = 11;
 controls.maxDistance = 55;
 controls.autoRotate = true;
-controls.autoRotateSpeed = 0.45;
+controls.autoRotateSpeed = 0.16;
 controls.enablePan = false;
 controls.enabled = false; // dinyalakan setelah intro
 
@@ -158,6 +158,7 @@ scene.add(new THREE.Mesh(new THREE.SphereGeometry(300, 48, 48), nebulaMat));
 const R = 6.2;
 const earthGroup = new THREE.Group();
 earthGroup.rotation.z = 23.4 * Math.PI / 180; // kemiringan sumbu
+earthGroup.position.y = -2.4; // sedikit lebih bawah
 scene.add(earthGroup);
 
 const tl = new THREE.TextureLoader();
@@ -217,7 +218,15 @@ const photoGroups = [];
 const pickMeshes = [];
 let loadedCount = 0;
 const loaderBar = document.getElementById('loaderBar');
+const loaderRider = document.getElementById('loaderRider');
+const loaderPct = document.getElementById('loaderPct');
 const loaderEl = document.getElementById('loader');
+function setLoaderProgress(p) {
+  const pct = Math.round(Math.min(1, p) * 100);
+  if (loaderBar) loaderBar.style.width = pct + '%';
+  if (loaderRider) loaderRider.style.left = pct + '%';
+  if (loaderPct) loaderPct.textContent = pct + '%';
+}
 
 const RING_R = 13.5;
 PHOTOS.forEach((src, i) => {
@@ -259,11 +268,11 @@ PHOTOS.forEach((src, i) => {
     frame.geometry.dispose(); frame.geometry = new THREE.PlaneGeometry(w + 0.28, h + 0.28);
 
     loadedCount++;
-    if (loaderBar) loaderBar.style.width = `${Math.round((loadedCount / PHOTOS.length) * 100)}%`;
+    setLoaderProgress(loadedCount / PHOTOS.length);
     if (loadedCount === PHOTOS.length) startExperience();
   }, undefined, () => {
     loadedCount++;
-    if (loaderBar) loaderBar.style.width = `${Math.round((loadedCount / PHOTOS.length) * 100)}%`;
+    setLoaderProgress(loadedCount / PHOTOS.length);
     if (loadedCount === PHOTOS.length) startExperience();
   });
 });
@@ -317,6 +326,8 @@ function focusPhoto(group) {
   controls.autoRotate = false;
   if (hovered) { hovered.userData.scaleMul = 1; hovered = null; }
   canvas.classList.remove('is-pointer');
+  hud.classList.add('is-focusing'); // sembunyikan tulisan lain
+  closeMusicMenu();
 
   photoGroups.forEach((g) => {
     g.userData.focused = (g === group);
@@ -337,6 +348,7 @@ function unfocus() {
   focused = null;
   photoGroups.forEach((g) => { g.userData.focused = false; g.userData.opacity = 1; });
   focuscap.classList.remove('is-shown');
+  hud.classList.remove('is-focusing');
   controls.enabled = true;
   controls.autoRotate = true;
 }
@@ -391,11 +403,25 @@ let rainOn = false, rainPts = null, rainVel = null;
 })();
 
 /* ============================================================
-   MUSIK — pakai assets/music.mp3 jika ada, jika tidak pad ambient
+   MUSIK — pilih lagu (Space Song / Ruang Rindu / Ambient)
+   Letakkan file di assets/music/ ; jika tidak ada, jatuh ke ambient.
    ============================================================ */
+const SONGS = {
+  space:   { file: 'assets/music/space-song.mp3' },
+  ruang:   { file: 'assets/music/ruang-rindu.mp3' },
+  ambient: { file: null }
+};
+const musicWrap = document.getElementById('music');
 const btnMusic = document.getElementById('btnMusic');
-let musicOn = false, audioEl = null, actx = null, masterGain = null, synthBuilt = false;
+const musicMenu = document.getElementById('musicMenu');
+let currentSong = null, audioEl = null, actx = null, masterGain = null, synthBuilt = false, synthOn = false;
 
+function closeMusicMenu() { musicWrap.classList.remove('is-open'); }
+
+function ensureCtx() {
+  if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+  if (actx.state === 'suspended') actx.resume();
+}
 function buildSynth(ctx) {
   masterGain = ctx.createGain(); masterGain.gain.value = 0; masterGain.connect(ctx.destination);
   const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 950; filter.connect(masterGain);
@@ -422,28 +448,38 @@ function fadeMaster(to, dur) {
   masterGain.gain.linearRampToValueAtTime(to, now + dur);
 }
 function useSynth() {
-  if (!actx) { actx = new (window.AudioContext || window.webkitAudioContext)(); }
-  if (actx.state === 'suspended') actx.resume();
+  ensureCtx();
   if (!synthBuilt) buildSynth(actx);
+  synthOn = true;
   fadeMaster(0.5, 3);
 }
-function startMusic() {
-  if (!audioEl) { audioEl = new Audio('assets/music.mp3'); audioEl.loop = true; audioEl.volume = 0; }
+function playFile(file) {
+  audioEl = new Audio(file); audioEl.loop = true; audioEl.volume = 0;
   audioEl.play().then(() => {
-    let v = 0; const id = setInterval(() => { v = Math.min(0.65, v + 0.03); audioEl.volume = v; if (v >= 0.65) clearInterval(id); }, 80);
-  }).catch(() => { useSynth(); }); // tidak ada file → pad ambient
+    let v = 0; const id = setInterval(() => { v = Math.min(0.7, v + 0.04); audioEl.volume = v; if (v >= 0.7) clearInterval(id); }, 80);
+  }).catch(() => { audioEl = null; useSynth(); }); // file belum ada → ambient
 }
-function stopMusic() {
-  if (audioEl && !audioEl.paused) {
-    let v = audioEl.volume; const id = setInterval(() => { v = Math.max(0, v - 0.06); audioEl.volume = v; if (v <= 0) { audioEl.pause(); clearInterval(id); } }, 60);
-  }
-  if (masterGain) fadeMaster(0, 1.5);
+function stopAll() {
+  if (audioEl) { try { audioEl.pause(); } catch (e) {} audioEl = null; }
+  if (synthOn) { fadeMaster(0, 1.2); synthOn = false; }
 }
-btnMusic.addEventListener('click', () => {
-  musicOn = !musicOn;
-  btnMusic.classList.toggle('is-active', musicOn);
-  if (musicOn) startMusic(); else stopMusic();
+function selectSong(key) {
+  ensureCtx();
+  if (currentSong === key) { stopAll(); currentSong = null; updateMusicUI(); return; }
+  stopAll();
+  currentSong = key;
+  if (key === 'ambient') useSynth(); else playFile(SONGS[key].file);
+  updateMusicUI();
+}
+function updateMusicUI() {
+  btnMusic.classList.toggle('is-active', !!currentSong);
+  musicMenu.querySelectorAll('.music__opt').forEach((b) => b.classList.toggle('is-active', b.dataset.song === currentSong));
+}
+btnMusic.addEventListener('click', (e) => { e.stopPropagation(); musicWrap.classList.toggle('is-open'); });
+musicMenu.querySelectorAll('.music__opt').forEach((b) => {
+  b.addEventListener('click', (e) => { e.stopPropagation(); selectSong(b.dataset.song); closeMusicMenu(); });
 });
+document.addEventListener('click', (e) => { if (!musicWrap.contains(e.target)) closeMusicMenu(); });
 
 /* ============================================================
    HUD: surat, efek ketik, penghitung
@@ -517,9 +553,9 @@ function animate() {
 
   nebulaMat.uniforms.uTime.value = t;
 
-  // rotasi bumi & awan
-  earth.rotation.y += dt * 0.035;
-  clouds.rotation.y += dt * 0.05;
+  // rotasi bumi & awan (lambat)
+  earth.rotation.y += dt * 0.02;
+  clouds.rotation.y += dt * 0.03;
 
   // intro: bumi membesar + kamera mendekat
   if (started && introT < 1) introT = Math.min(1, introT + dt / 2.2);
