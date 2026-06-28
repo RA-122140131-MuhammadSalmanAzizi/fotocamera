@@ -217,6 +217,7 @@ earthGroup.add(atmo);
 const photoGroups = [];
 const pickMeshes = [];
 let loadedCount = 0;
+let assetsLoaded = false;
 const loaderBar = document.getElementById('loaderBar');
 const loaderRider = document.getElementById('loaderRider');
 const loaderPct = document.getElementById('loaderPct');
@@ -266,17 +267,17 @@ PHOTOS.forEach((src, i) => {
     photo.geometry.dispose(); photo.geometry = new THREE.PlaneGeometry(w, h);
     photo.material.map = tex; photo.material.color.set(0xffffff); photo.material.needsUpdate = true;
     frame.geometry.dispose(); frame.geometry = new THREE.PlaneGeometry(w + 0.28, h + 0.28);
+    group.userData.pw = w; group.userData.ph = h;
 
     loadedCount++;
-    setLoaderProgress(loadedCount / PHOTOS.length);
-    if (loadedCount === PHOTOS.length) startExperience();
+    if (loadedCount === PHOTOS.length) assetsLoaded = true;
   }, undefined, () => {
     loadedCount++;
-    setLoaderProgress(loadedCount / PHOTOS.length);
-    if (loadedCount === PHOTOS.length) startExperience();
+    if (loadedCount === PHOTOS.length) assetsLoaded = true;
   });
 });
-setTimeout(() => { if (!started) startExperience(); }, 6500);
+// keamanan: kalau ada aset gagal/lama, tetap lanjut
+setTimeout(() => { assetsLoaded = true; }, 9000);
 
 /* ============================================================
    INTERAKSI: hover + klik foto + klik kosong
@@ -333,10 +334,18 @@ function focusPhoto(group) {
     g.userData.focused = (g === group);
     g.userData.opacity = (g === group) ? 1 : 0.12;
   });
+  // tempatkan di depan kamera & ukur agar muat di layar (responsif)
+  const D = 7;
   const dir = new THREE.Vector3();
   camera.getWorldDirection(dir);
-  group.userData.focusPos = camera.position.clone().add(dir.multiplyScalar(7));
-  group.userData.scaleMul = 2.4;
+  group.userData.focusPos = camera.position.clone().add(dir.multiplyScalar(D));
+
+  const visH = 2 * D * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  const visW = visH * camera.aspect;
+  const pw = group.userData.pw || 3.4, ph = group.userData.ph || 3.4;
+  // di layar sempit (mobile) lebar jadi pembatas → foto tidak kebesaran
+  const margin = window.innerWidth < 600 ? 0.82 : 0.7;
+  group.userData.scaleMul = Math.min((visH * margin) / ph, (visW * margin) / pw);
 
   focusText.textContent = CAPTIONS[group.userData.index] || '';
   focuscap.classList.add('is-shown');
@@ -407,14 +416,35 @@ let rainOn = false, rainPts = null, rainVel = null;
    Letakkan file di assets/music/ ; jika tidak ada, jatuh ke ambient.
    ============================================================ */
 const SONGS = {
-  space:   { file: 'assets/music/space-song.mp3' },
-  ruang:   { file: 'assets/music/ruang-rindu.mp3' },
-  ambient: { file: null }
+  space:   { yt: 'gCWaRhNUvfc' }, // Beach House - Space Song
+  ruang:   { yt: '9x7zAxxPRxU' }, // Letto - Ruang Rindu
+  ambient: { yt: null }           // pad ambient bawaan
 };
 const musicWrap = document.getElementById('music');
 const btnMusic = document.getElementById('btnMusic');
 const musicMenu = document.getElementById('musicMenu');
-let currentSong = null, audioEl = null, actx = null, masterGain = null, synthBuilt = false, synthOn = false;
+let currentSong = null, actx = null, masterGain = null, synthBuilt = false, synthOn = false;
+
+/* ---- pemutar YouTube tersembunyi ---- */
+let ytPlayer = null, ytReady = false, ytPending = null;
+window.onYouTubeIframeAPIReady = function () {
+  ytPlayer = new YT.Player('ytplayer', {
+    height: '1', width: '1',
+    playerVars: { autoplay: 0, controls: 0, disablekb: 1, playsinline: 1, fs: 0 },
+    events: { onReady: () => { ytReady = true; if (ytPending) { const id = ytPending; ytPending = null; ytPlay(id); } } }
+  });
+};
+(function loadYT() { const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s); })();
+function ytPlay(id) {
+  if (!ytReady || !ytPlayer) { ytPending = id; return; }
+  ytPlayer.loadVideoById(id);
+  ytPlayer.setVolume(72);
+  ytPlayer.playVideo();
+}
+function ytStop() {
+  ytPending = null;
+  if (ytReady && ytPlayer) { try { ytPlayer.stopVideo(); } catch (e) {} }
+}
 
 function closeMusicMenu() { musicWrap.classList.remove('is-open'); }
 
@@ -453,22 +483,16 @@ function useSynth() {
   synthOn = true;
   fadeMaster(0.5, 3);
 }
-function playFile(file) {
-  audioEl = new Audio(file); audioEl.loop = true; audioEl.volume = 0;
-  audioEl.play().then(() => {
-    let v = 0; const id = setInterval(() => { v = Math.min(0.7, v + 0.04); audioEl.volume = v; if (v >= 0.7) clearInterval(id); }, 80);
-  }).catch(() => { audioEl = null; useSynth(); }); // file belum ada → ambient
-}
 function stopAll() {
-  if (audioEl) { try { audioEl.pause(); } catch (e) {} audioEl = null; }
+  ytStop();
   if (synthOn) { fadeMaster(0, 1.2); synthOn = false; }
 }
 function selectSong(key) {
-  ensureCtx();
   if (currentSong === key) { stopAll(); currentSong = null; updateMusicUI(); return; }
   stopAll();
   currentSong = key;
-  if (key === 'ambient') useSynth(); else playFile(SONGS[key].file);
+  if (key === 'ambient') useSynth();      // synth bawaan
+  else ytPlay(SONGS[key].yt);             // putar dari YouTube
   updateMusicUI();
 }
 function updateMusicUI() {
@@ -541,6 +565,30 @@ function startExperience() {
   setTimeout(() => hud.classList.add('is-shown'), 500);
   setTimeout(() => { controls.enabled = true; }, 2400);
 }
+
+/* ---- loader: sengaja lebih lama & hidup, dengan pesan berganti ---- */
+const LOADER_MIN = 5600; // durasi minimum loading (ms)
+const loaderTextEl = document.getElementById('loaderText');
+const LOADER_MSGS = [
+  'Menyalakan dunia kita…',
+  'Mengumpulkan kepingan rindu…',
+  'Menata bintang satu per satu…',
+  'Memutar Bumi ke arahmu…',
+  'Menghangatkan ribuan hati…',
+  'Menyiapkan kejutan untuk Nabila…',
+  'Hampir siap, sebentar ya sayang…'
+];
+const loaderStart = performance.now();
+let lastMsg = -1;
+(function loaderLoop() {
+  const e = performance.now() - loaderStart;
+  const timeFrac = Math.min(1, e / LOADER_MIN);
+  setLoaderProgress(Math.min(timeFrac, assetsLoaded ? 1 : 0.92));
+  const mi = Math.min(LOADER_MSGS.length - 1, Math.floor(e / (LOADER_MIN / LOADER_MSGS.length)));
+  if (mi !== lastMsg && loaderTextEl) { lastMsg = mi; loaderTextEl.textContent = LOADER_MSGS[mi]; }
+  if (timeFrac >= 1 && assetsLoaded) { startExperience(); return; }
+  requestAnimationFrame(loaderLoop);
+})();
 
 const tmp = new THREE.Vector3();
 const clock = new THREE.Clock();
