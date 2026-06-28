@@ -5,14 +5,26 @@ Sebuah website 3D bertema "bucin" dengan nuansa biru yang lembut, dibuat oleh
 
 ## Isi
 
-- **Latar 3D** partikel berbentuk hati yang melayang (Three.js).
-- **Galeri foto 3D** berbentuk carousel silinder — bisa ditarik, digeser, atau dibiarkan berputar sendiri.
-- **Surat** dalam kartu kaca (glassmorphism).
-- **Penghitung waktu** yang terus berjalan.
-- **Kartu alasan** lengkap dengan ikon.
-- Kursor kustom, efek ketik, dan animasi reveal saat scroll.
+Satu dunia 3D imersif yang dibangun dengan Three.js + shader GLSL:
+
+- **Hati raksasa dari ~7000 partikel** (shader custom) yang berdetak seperti
+  jantung dan terbentuk dari serpihan beterbangan saat halaman dibuka.
+- **Nebula biru bergerak** (fbm noise shader) + starfield, dengan **bloom**
+  sinematik (post-processing).
+- **Foto melayang mengelilingi hati** — bisa **di-orbit (drag)**, **zoom (scroll)**,
+  hover untuk membesar, dan **klik untuk membawa foto terbang ke depan** + caption.
+- **Klik ruang kosong** memunculkan ledakan partikel hati.
+- Tombol **Hujan Hati**, **Surat** (kartu kaca), dan **Reset** tampilan.
+- Penghitung hari kebersamaan, efek ketik, kursor & HUD elegan.
 
 Tidak menggunakan emoji — semua ikon memakai SVG.
+
+## Kontrol
+
+- Tarik / geser: memutar dunia.
+- Scroll / cubit: memperbesar.
+- Klik foto: fokus + caption. Klik lagi di area kosong: kembali.
+- Klik ruang kosong: ledakan hati.
 
 ## Menjalankan
 
@@ -30,11 +42,13 @@ Lalu buka `http://localhost:8080`.
 
 ## Kustomisasi
 
-- **Tanggal mulai penghitung**: ubah `START_DATE` di bagian atas `js/main.js`
-  (ingat: bulan dimulai dari 0, jadi `5` = Juni).
-- **Kalimat berjalan di hero**: ubah `TYPE_LINES` di `js/main.js`.
-- **Foto**: letakkan di `assets/photos/` dengan nama `photo1.jpeg` … `photo14.jpeg`.
+- **Tanggal jadian**: ubah `START_DATE` di atas `js/main.js`
+  (bulan dimulai dari 0, jadi `4` = Mei → sekarang 5 Mei 2025).
+- **Caption foto**: ubah array `CAPTIONS`.
+- **Kalimat berjalan**: ubah array `TYPE_LINES`.
+- **Foto**: letakkan di `assets/photos/` bernama `photo1.jpeg` … `photo14.jpeg`.
 
 ## Teknologi
 
-HTML, CSS, dan JavaScript murni + [Three.js](https://threejs.org) (lewat CDN).
+HTML, CSS, dan JavaScript (ES Module) + [Three.js](https://threejs.org) r160
+dengan `OrbitControls`, `EffectComposer`, dan `UnrealBloomPass` (lewat CDN/importmap).
